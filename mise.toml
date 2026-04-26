@@ -1,0 +1,11 @@
+[tools]
+dotnet = "10.0.201"
+
+[tasks.build]
+run = "dotnet build Worktree.slnx"
+
+[tasks.test]
+run = "dotnet test Worktree.slnx"
+
+[tasks.publish-aot]
+run = "dotnet publish src/Worktree/Worktree.fsproj -c Release -r linux-x64 -p:PublishAot=true"
