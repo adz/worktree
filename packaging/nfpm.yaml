@@ -1,0 +1,13 @@
+name: "worktree"
+arch: "amd64"
+platform: "linux"
+version: "${VERSION}"
+section: "utils"
+priority: "optional"
+maintainer: "Adam Davies"
+description: "Small CLI to work with git bare repos and worktrees."
+license: "MIT"
+homepage: "https://github.com/user/worktree"
+contents:
+  - src: ../artifacts/publish/Worktree/release_linux-x64/worktree
+    dst: /usr/bin/worktree

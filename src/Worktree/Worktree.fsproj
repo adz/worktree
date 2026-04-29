@@ -3,6 +3,13 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>worktree</AssemblyName>
     <RootNamespace>Worktree</RootNamespace>
+    <Version>0.1.0</Version>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>worktree</ToolCommandName>
+    <PackageId>Worktree</PackageId>
+    <Authors>Adam</Authors>
+    <Description>Small CLI to work with git bare repos and worktrees.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PublishAot Condition="'$(PublishAot)' == ''">false</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
     <PublishTrimmed Condition="'$(PublishAot)' == 'true'">true</PublishTrimmed>

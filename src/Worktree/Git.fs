@@ -145,6 +145,16 @@ module Git =
     if hasOriginRemote cwd then
       runOrFail cwd [ "fetch"; "origin" ] false |> ignore
 
+  let getBranches cwd =
+    runLines cwd [ "for-each-ref"; "--format=%(refname:short)"; "refs/heads"; "refs/remotes/origin" ]
+    |> List.map (fun ref ->
+      if ref.StartsWith "origin/" then
+        ref.Substring("origin/".Length)
+      else
+        ref)
+    |> List.distinct
+    |> List.filter (fun ref -> ref <> "HEAD")
+
   let configureOriginFetch cwd =
     runOrFail cwd [ "config"; "remote.origin.fetch"; "+refs/heads/*:refs/remotes/origin/*" ] false |> ignore
 

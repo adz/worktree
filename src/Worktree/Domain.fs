@@ -10,14 +10,23 @@ type RepoCommand =
   | SetRemote of remote: string
   | Show
 
+type CompletionShell =
+  | Bash
+  | Zsh
+  | Fish
+  | PowerShell
+
 type Command =
   | Help
+  | Version
   | Repo of RepoCommand
   | Create of branch: string
   | Branch of branch: string
   | Show
   | PruneRemovedFolders
   | Repair of paths: string list
+  | Completions of shell: CompletionShell
+  | Complete of index: int * words: string list
 
 module Domain =
   let allowedPrefixes = set [ "feature"; "fix"; "chore"; "hotfix" ]

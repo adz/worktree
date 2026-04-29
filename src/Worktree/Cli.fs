@@ -4,6 +4,8 @@ open System
 open System.IO
 
 module Cli =
+  let version = "0.1.0"
+
   let private padRight width (value: string) =
     value.PadRight width
 
@@ -14,7 +16,7 @@ module Cli =
     let commandWidth = 38
 
     String.concat Environment.NewLine [
-      "worktree"
+      sprintf "worktree %s" version
       ""
       "Usage"
       "  worktree <command>"
@@ -35,6 +37,9 @@ module Cli =
       commandLine commandWidth "show" "List registered worktrees"
       commandLine commandWidth "prune-removed-folders" "Prune deleted worktree folders"
       commandLine commandWidth "repair [<path>...]" "Repair broken worktree links"
+      ""
+      "Workflows"
+      commandLine commandWidth "completions <shell>" "Generate shell completion script"
       ""
       "Notes"
       "  create prefixes: feature, fix, chore, hotfix"
@@ -58,6 +63,14 @@ module Cli =
       | [ "help" ]
       | [ "-h" ]
       | [ "--help" ] -> Ok Help
+      | [ "version" ]
+      | [ "-v" ]
+      | [ "--version" ] -> Ok Command.Version
+      | [ "completions"; "bash" ] -> Ok(Command.Completions CompletionShell.Bash)
+      | [ "completions"; "zsh" ] -> Ok(Command.Completions CompletionShell.Zsh)
+      | [ "completions"; "fish" ] -> Ok(Command.Completions CompletionShell.Fish)
+      | [ "completions"; "powershell" ] -> Ok(Command.Completions CompletionShell.PowerShell)
+      | "__complete" :: index :: words -> Ok(Command.Complete(int index, words))
       | [ "repo"; "init" ] -> Ok(Command.Repo RepoCommand.Init)
       | [ "repo"; "create"; folderName ] -> Ok(Command.Repo(RepoCommand.Create folderName))
       | [ "repo"; "clone"; remote ] -> Ok(Command.Repo(RepoCommand.Clone remote))
@@ -74,6 +87,54 @@ module Cli =
       | command :: _ -> Error(sprintf "unknown worktree command: %s" command)
     with ex ->
       Error ex.Message
+
+  let private complete cwd index (words: string list) =
+    let context = words |> List.truncate index
+
+    let completions =
+      match context with
+      | [ "worktree" ] -> [ "repo"; "create"; "branch"; "show"; "prune-removed-folders"; "repair"; "help"; "version" ]
+      | [ "worktree"; "repo" ] -> [ "init"; "create"; "clone"; "convert"; "set-remote"; "info"; "show" ]
+      | [ "worktree"; "create" ] -> Domain.allowedPrefixes |> Set.toList
+      | [ "worktree"; "branch" ] -> if Git.isBareRepoHere cwd then Git.getBranches cwd else []
+      | [ "worktree"; "repo"; ("create" | "convert") ]
+      | [ "worktree"; "repair" ] ->
+          Directory.GetDirectories(cwd) |> Array.toList |> List.map (fun d -> (Path.GetFileName d) + "/")
+      | _ -> []
+
+    completions |> List.iter (printfn "%s")
+
+  let private generateCompletions shell =
+    match shell with
+    | CompletionShell.Bash ->
+        printfn
+          """_worktree_completions() {
+    local cur prev words cword
+    _get_comp_words_by_ref -n : cur prev words cword
+    local suggestions=$(worktree __complete "$cword" "${words[@]}")
+    COMPREPLY=( $(compgen -W "$suggestions" -- "$cur") )
+}
+complete -F _worktree_completions worktree"""
+    | CompletionShell.Zsh ->
+        printfn
+          """#compdef worktree
+_worktree() {
+    local -a suggestions
+    suggestions=(${(f)"$(worktree __complete $((CURRENT - 1)) "${words[@]}")"})
+    _arguments "*: :($suggestions)"
+}
+_worktree "$@" """
+    | CompletionShell.Fish ->
+        printfn "complete -c worktree -f -a \"(worktree __complete (math (count (commandline -poc)) + 1) (commandline -poc))\""
+    | CompletionShell.PowerShell ->
+        printfn
+          """Register-ArgumentCompleter -Native -CommandName worktree -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+    $words = $commandAst.Elements | ForEach-Object { $_.ToString() }
+    $index = $words.IndexOf($wordToComplete)
+    if ($index -lt 0) { $index = $words.Count }
+    worktree __complete $index $words | Where-Object { $_ -like "$wordToComplete*" }
+}"""
 
   let private initRepo repoRoot =
     Git.ensureNoGitDirExists repoRoot
@@ -187,6 +248,15 @@ module Cli =
     match command with
     | Command.Help ->
         printfn "%s" helpText
+        0
+    | Command.Version ->
+        printfn "%s" version
+        0
+    | Command.Completions shell ->
+        generateCompletions shell
+        0
+    | Command.Complete(index, words) ->
+        complete cwd index words
         0
     | Command.Repo RepoCommand.Init ->
         initRepo cwd

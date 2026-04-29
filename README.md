@@ -2,10 +2,12 @@
 
 Small CLI to work with git bare repos and worktrees with easy-to-remember commands.
 
+Version: 0.1.0
+
 ## Help Output
 
 ```bash
-worktree
+worktree 0.1.0
 
 Usage
   worktree <command>
@@ -26,6 +28,9 @@ Worktree Commands
   show                                    List registered worktrees
   prune-removed-folders                   Prune deleted worktree folders
   repair [<path>...]                      Repair broken worktree links
+
+Workflows
+  completions <shell>                     Generate shell completion script
 
 Notes
   create prefixes: feature, fix, chore, hotfix
@@ -59,6 +64,38 @@ mise run publish-aot
 ```
 
 Build output is centralized under [`artifacts/`](./artifacts/) via the .NET SDK artifacts layout.
+
+## Shell Completions
+
+You can enable tab completion for your shell by adding the following to your shell configuration file.
+
+### Bash
+
+Add this to your `~/.bashrc`:
+```bash
+source <(worktree completions bash)
+```
+
+### Zsh
+
+Add this to your `~/.zshrc`:
+```zsh
+source <(worktree completions zsh)
+```
+
+### Fish
+
+Add this to your `~/.config/fish/config.fish`:
+```fish
+worktree completions fish | source
+```
+
+### PowerShell
+
+Add this to your `$PROFILE`:
+```powershell
+Invoke-Expression (&worktree completions powershell | Out-String)
+```
 
 ## Tooling
 
